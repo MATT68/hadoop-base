@@ -1,0 +1,18 @@
+-- Configuramos el pc para conectarse al repositorio remoto
+git init
+git config --global user.name "matt68"
+git config --global user.email "matiyoli@gmail.com"
+   
+git remote -v
+
+git remote remove hadoop-base
+git remote add  hadoop-base https://github.com/MATT68/hadoop-base.git
+
+git add .
+git commit .
+
+git pull --all
+git fetch --all
+
+git push --all --repo=hadoop-base
+git push --all --repo=hadoop-base --force

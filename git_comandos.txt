@@ -1,4 +1,4 @@
--- Configuramos el pc para conectarse al repositorio remoto
+﻿-- Configuramos el pc para conectarse al repositorio remoto
 git init
 git config --global user.name "matt68"
 git config --global user.email "matiyoli@gmail.com"
@@ -13,6 +13,9 @@ git commit .
 
 git pull --all
 git fetch --all
+
+git pull <remote_repository> <branch>
+git pull    hadoop-base    master
 
 git push --all --repo=hadoop-base
 git push --all --repo=hadoop-base --force

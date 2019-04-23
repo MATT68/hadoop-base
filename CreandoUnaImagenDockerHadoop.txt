@@ -1,0 +1,119 @@
+
+Para configurar un Cluster de Hadoop en Docker, vamos a ir realizando los siguientes puntos:
+
+ 1- Configurar la imagen base
+
+ 2- Crear el usuario hadoop, descomprimir hadoop y hacer la configuración mínima 
+   de una máquina con un pseudo cluster hadoop instalado.
+
+ 3- Una vez que controlemos el pseudo cluster, haremos una instalación de un cluster hadoop de varias máquinas. 
+
+******************************************************************************************************************************************
+
+Además debemos tener en cuenta algunos requisitos de docker que se deben cumplir a la hora de ejecutar aplicaciones hadoop dentro de docker:
+
+First, the Docker container will be explicitly launched with the application owner as the container user. If the application owner is not a valid user in the Docker image, the application will fail. The container user is specified by the user’s UID. If the user’s UID is different between the NodeManager host and the Docker image, the container may be launched as the wrong user or may fail to launch because the UID does not exist. See User Management in Docker Container section for more details.
+
+Second, the Docker image must have whatever is expected by the application in order to execute. In the case of Hadoop (MapReduce or Spark), the Docker image must contain the JRE and Hadoop libraries and have the necessary environment variables set: JAVA_HOME, HADOOP_COMMON_PATH, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME, HADOOP_YARN_HOME, and HADOOP_CONF_DIR. Note that the Java and Hadoop component versions available in the Docker image must be compatible with what’s installed on the cluster and in any other Docker images being used for other tasks of the same job. Otherwise the Hadoop components started in the Docker container may be unable to communicate with external Hadoop components.
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+1.- Configurar la imagen base.
+  Vamos a empezar creando una imagen de docker básica:
+
+ Para crear esta imagen, vamos a partir de un Dockerfile que tiene incorporado los elementos base
+ para que Hadoop funcione correctamente:
+ 1.- Una imagen base, p.e. ubuntu:16.04
+ 1.- JDK 1.8
+ 2.- Hadoop 3.2.0
+
+ El Dockerfile sería algo así:
+
+******************************************************************************************************************************************
+#
+#  Author: Matias Andres Perez
+#  Date: 2019-04-01
+#
+#  Desc: Creacion de una imagen base de hadoop (sin instalar ni configurar  nada).
+#        Con Java 1.8 
+#        Hadoop 3.2
+#        Librerias Ubuntu necesarias
+#
+#        matt68/hadoop-base
+#
+FROM  ubuntu:16.04
+LABEL MAINTAINER="Matias Andres (https://www.linkedin.com/in/matias-andres-formador-db2-jcl-datastage-52a46b31/)"
+LABEL DESCRIPTION="Imagen base para formar un cluster hadoop en docker"
+
+ARG HADOOP_VERSION=3.2.0
+
+USER root
+
+# Java
+RUN apt-get update && apt-get install -y openjdk-8-jdk wget
+
+# Hadoop
+# Lo dejamos en /usr/local/hadoop
+RUN wget http://apache.cs.utah.edu/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz
+RUN tar zxf hadoop-${HADOOP_VERSION}.tar.gz -C /usr/local/                 && \
+    rm -f hadoop-${HADOOP_VERSION}.tar.gz                                  && \
+	  cd /usr/local && ln -s ./hadoop-${HADOOP_VERSION} hadoop
+	
+# Descargamos algunas librerias 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils        \ 
+    build-essential  \ 
+    curl             \ 
+    iproute2         \ 
+    iputils-ping     \
+    libfreetype6-dev \
+    libpng12-dev     \
+    libzmq3-dev      \
+    netbase          \
+    openssh-client   \
+    openssh-server   \
+    pkg-config       \
+    rsync            \ 
+    rsyslog          \
+    software-properties-common \
+    snappy           \
+    sudo             \
+    ssh              \
+    unzip            \
+    vim              \ 
+    &&               \
+    apt-get clean &&     \
+    rm -rf /var/lib/apt/lists/*
+
+# Hasta aqui la imagen base. 
+# El resto de configuraciones las hacemos en imagenes que parten de esta
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+ 2- Crear el usuario hadoop, descomprimir hadoop y hacer la configuración mínima 
+   de una máquina con un pseudo cluster hadoop instalado.
+******************************************************************************************************************************************
+El siguiente punto sería empezar a configurar la imagen, desplegando hadoop, creando el usuario hadoop y haciendo 
+el despliegue mínimo de una máquina con un pseudo cluster hadoop instalado.
+
+Una vez que controlemos el pseudo cluster, haremos una instalación de un cluster hadoop de varias máquinas. 
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+
+3.- Para crear la imagen base del cluster vamos a tener en cuenta que queremos definir un master y tres slaves.
+    Correcciones para hacer sobre la imagen base del pseudo-cluster:
+
+    RUN useradd -m -s /bin/bash hadoop
+
+    RUN echo HDFS_NAMENODE_USER=hadoop >> /home/hadoop/hadoop/etc/hadoop/hadoop-env.sh
+    RUN echo HDFS_DATANODE_USER=hadoop >> /home/hadoop/hadoop/etc/hadoop/hadoop-env.sh                        
+    RUN echo HDFS_SECONDARYNAMENODE_USER=hadoop >> /home/hadoop/hadoop/etc/hadoop/hadoop-env.sh
+
+    Además, en este cluster vamos a instalar Spark además de Hadoop. 
+
+
+ 
+    
+ 
